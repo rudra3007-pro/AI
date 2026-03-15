@@ -320,8 +320,52 @@
     font-size: 0.72rem; font-weight: 600; color: white;
     overflow: hidden; cursor: pointer;
     border: 1px solid var(--border);
+    position: relative;
   }
   .header-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+  /* ── USER DROPDOWN ── */
+  .user-menu {
+    position: relative;
+  }
+
+  .user-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    background: #1a1a1a;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    min-width: 200px;
+    z-index: 200;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    animation: fadeUp 0.15s ease-out;
+  }
+  .user-dropdown.open { display: block; }
+
+  .user-dropdown-info {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .user-dropdown-name { font-size: 0.85rem; font-weight: 500; }
+  .user-dropdown-email { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
+
+  .user-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 10px 14px;
+    font-size: 0.83rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: background 0.12s;
+    text-decoration: none;
+  }
+  .user-dropdown-item:hover { background: var(--surface2); color: var(--text); }
+  .user-dropdown-item.danger:hover { background: rgba(229,62,62,0.1); color: #e53e3e; }
+  .user-dropdown-item svg { width: 14px; height: 14px; flex-shrink: 0; }
 
   /* ── CHAT ── */
   #chat-container {
@@ -480,7 +524,23 @@
       </div>
     </div>
     <div class="header-user">
-      <div class="header-avatar" id="header-avatar" onclick="openDrawer()" title="Account">?</div>
+      <div class="user-menu" id="user-menu">
+        <div class="header-avatar" id="header-avatar" onclick="toggleUserMenu()" title="Account">?</div>
+        <div class="user-dropdown" id="user-dropdown">
+          <div class="user-dropdown-info">
+            <div class="user-dropdown-name" id="dropdown-name">—</div>
+            <div class="user-dropdown-email" id="dropdown-email">—</div>
+          </div>
+          <a class="user-dropdown-item" onclick="openDrawer(); closeUserMenu()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+            Chat History
+          </a>
+          <a class="user-dropdown-item danger" href="/logout">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+            Sign out
+          </a>
+        </div>
+      </div>
     </div>
   </header>
 
@@ -572,6 +632,8 @@
 
     document.getElementById('drawer-user-name').textContent = name;
     document.getElementById('drawer-user-email').textContent = currentUser.email;
+    document.getElementById('dropdown-name').textContent = name;
+    document.getElementById('dropdown-email').textContent = currentUser.email;
 
     // Avatar — use Google picture if available
     const drawerAvatar = document.getElementById('drawer-avatar');
@@ -799,11 +861,23 @@
     recognition.onresult = (e) => { const t = Array.from(e.results).map(r => r[0].transcript).join(''); input.value = t; input.style.height = 'auto'; input.style.height = Math.min(input.scrollHeight, 160) + 'px'; };
     recognition.onend = () => { isRecording = false; document.getElementById('mic-btn').classList.remove('recording'); input.placeholder = 'Message Nexus AI...'; if (input.value.trim()) sendMessage(); };
     recognition.onerror = () => { isRecording = false; document.getElementById('mic-btn').classList.remove('recording'); input.placeholder = 'Message Nexus AI...'; };
-    recognition.start();
+    // Start
+  init();
+
+  // ── USER MENU ──
+  function toggleUserMenu() {
+    document.getElementById('user-dropdown').classList.toggle('open');
   }
 
-  // Start
-  init();
+  function closeUserMenu() {
+    document.getElementById('user-dropdown').classList.remove('open');
+  }
+
+  // Close dropdown when clicking outside
+  document.addEventListener('click', (e) => {
+    const menu = document.getElementById('user-menu');
+    if (menu && !menu.contains(e.target)) closeUserMenu();
+  });
 </script>
 </body>
 </html>
