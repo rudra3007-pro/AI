@@ -22,6 +22,56 @@
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
+  /* ── IN-APP BROWSER WARNING ── */
+  #browser-warning {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    z-index: 9999;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  #browser-warning.show { display: flex; animation: fadeUp 0.3s ease-out; }
+
+  .browser-warning-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 36px 28px;
+    max-width: 340px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    text-align: center;
+  }
+  .browser-warning-icon { font-size: 2.5rem; margin-bottom: 4px; }
+  .browser-warning-title { font-size: 1.1rem; font-weight: 600; letter-spacing: -0.02em; }
+  .browser-warning-text { font-size: 0.83rem; color: var(--text-muted); line-height: 1.65; }
+  .browser-warning-steps { background: var(--surface2); border-radius: 10px; padding: 14px 16px; width: 100%; text-align: left; }
+  .browser-warning-steps p { font-size: 0.8rem; color: var(--text-muted); line-height: 1.9; }
+  .browser-warning-steps strong { color: var(--text); }
+  .copy-url-btn {
+    width: 100%;
+    padding: 11px;
+    background: var(--accent);
+    border: none;
+    border-radius: 10px;
+    color: white;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s;
+    margin-top: 4px;
+  }
+  .copy-url-btn:hover { background: #0d8f6e; }
+  .copy-url-btn.copied { background: #2a2a2a; color: var(--text-muted); }
+
   body {
     background: var(--bg);
     color: var(--text);
@@ -451,6 +501,26 @@
 </head>
 <body>
 
+<!-- In-App Browser Warning -->
+<div id="browser-warning">
+  <div class="browser-warning-card">
+    <div class="browser-warning-icon">🌐</div>
+    <div class="browser-warning-title">Open in your browser</div>
+    <div class="browser-warning-text">
+      Google Sign-In doesn't work inside Snapchat, Instagram, or other apps. Please open this page in Chrome or Safari.
+    </div>
+    <div class="browser-warning-steps">
+      <p>
+        <strong>On iPhone:</strong> Tap ··· → Open in Safari<br>
+        <strong>On Android:</strong> Tap ⋮ → Open in Chrome
+      </p>
+    </div>
+    <button class="copy-url-btn" onclick="copyUrl()" id="copy-url-btn">
+      Copy Link to Open in Browser
+    </button>
+  </div>
+</div>
+
 <!-- Login Screen -->
 <div id="login-screen">
   <div class="login-card">
@@ -861,7 +931,34 @@
     recognition.onresult = (e) => { const t = Array.from(e.results).map(r => r[0].transcript).join(''); input.value = t; input.style.height = 'auto'; input.style.height = Math.min(input.scrollHeight, 160) + 'px'; };
     recognition.onend = () => { isRecording = false; document.getElementById('mic-btn').classList.remove('recording'); input.placeholder = 'Message Nexus AI...'; if (input.value.trim()) sendMessage(); };
     recognition.onerror = () => { isRecording = false; document.getElementById('mic-btn').classList.remove('recording'); input.placeholder = 'Message Nexus AI...'; };
-    // Start
+    // ── IN-APP BROWSER DETECTION ──
+  function isInAppBrowser() {
+    const ua = navigator.userAgent || '';
+    return (
+      /FBAN|FBAV|Instagram|Snapchat|Twitter|TikTok|Line|WeChat|MicroMessenger|LinkedInApp/i.test(ua) ||
+      (/(iPhone|iPod|iPad).*AppleWebKit(?!.*Safari)/i.test(ua)) // iOS webview
+    );
+  }
+
+  function copyUrl() {
+    const btn = document.getElementById('copy-url-btn');
+    navigator.clipboard.writeText(window.location.href).then(() => {
+      btn.textContent = '✓ Copied! Now paste in Chrome/Safari';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = 'Copy Link to Open in Browser';
+        btn.classList.remove('copied');
+      }, 3000);
+    }).catch(() => {
+      btn.textContent = window.location.href;
+    });
+  }
+
+  if (isInAppBrowser()) {
+    document.getElementById('browser-warning').classList.add('show');
+  }
+
+  // Start
   init();
 
   // ── USER MENU ──
